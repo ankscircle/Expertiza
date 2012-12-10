@@ -1,0 +1,239 @@
+<h1 xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">Manage users</h1>
+
+<br/>
+<% form_tag :action => 'show_selection'do %>
+    View user - enter exact login: <%= text_field_with_auto_complete :user, :name, {:size => 41} %>
+    <input type='submit' value='Edit'/>
+<% end %>
+
+<% form_tag :action => 'list', :paginate_show => '1', :num_users => @per_page do %>
+    Search users: <%= text_field_tag(:letter,params[:letter]) %>
+    <%= select_tag(:search_by, options_for_select([['Username', 1], ['Full name', 2], ['Email', 3]])) %>
+    <%= submit_tag("Search") %>
+<% end %>
+
+<script type="text/javascript">
+    function setChecked(val) {
+        var checkboxes = document.getElementsByName('link[]');
+        for(var i in checkboxes)
+            checkboxes[i].checked= val;
+    }
+
+    function toggleElementOurs(elementId,visibleCommand,prefixID) {
+                var obj = document.getElementById(elementId);
+        if (obj == null) { return; }
+        var displayCondition;
+        otherVar = (visibleCommand == 'show_'+prefixID) ? 'hide_'+prefixID:'show_'+prefixID;
+        document.getElementById(otherVar).setAttribute("href","#");
+        document.getElementById(otherVar).style.display = '';
+        document
+        // document.getElementById(otherVar).onclick = function(){toggleElementOurs(this.id)};
+
+        document.getElementById(visibleCommand).removeAttribute("href");
+        document.getElementById(visibleCommand).style.display = 'none';
+
+        // document.getElementById(visibleCommand).onclick = "";
+
+        if(visibleCommand=='show_'+prefixID)
+        {
+        displayCondition = 'none';
+        }
+        else
+        {
+        displayCondition = '';
+        }
+        var bExpand = obj.style.display.length == 0;
+        obj.style.display = displayCondition;
+
+
+    }
+      window.onload = function()
+      {
+      <% for user in @users %>
+          <% if !@doubleArry[user.id].nil? %>
+      <% (@doubleArry[user.id]).each do |dummyUser| if !(@doubleArry[dummyUser.id].nil?)%><% for j in 0..(@doubleArry[dummyUser.id]).count-1 do%> toggleElementOurs('<%= dummyUser.id%>_<%=j%>table',"show_<%= dummyUser.id%>",<%= dummyUser.id%>);<%j =j-1 end end end%><% for i in 0.. @doubleArry[user.id].count-1 do%> toggleElementOurs('<%= user.id%>_<%=i%>table',"show_<%= user.id%>",<%= user.id%>);<%i =i-1 end%>
+
+      <%end%>
+          <%end%>
+      }
+</script>
+<body>
+<div>
+  <%= render :partial => 'shared_scripts/letters' %>
+</div>
+
+<%= render :partial => 'users/pagination' %>
+<!--< form_tag :action => 'list', :id => 'ids_user',:onSubmit => 'handleChange()' do %>    -->
+<%form_tag :action => 'list' do %>
+    <div class="exp">
+      <!-- <input type="checkbox" onClick="checkAll(this)"/> Select/Unselect All<br/> -->
+      <table border="1">
+
+        <tr><th colspan=7></th><th colspan=3 class="head">E-mail on ...</th></tr>
+        <tr>
+          <th class="head"><a href="javascript:setChecked(1)"><font face="Arial, Helvetica, sans-serif" size="2">Check
+            All</font></a></th>
+          <th class="head">   </th>
+          <th class="head">Name</th>
+          <th class="head">Full Name</th>
+          <th class="head">Email Address</th>
+          <th class="head">Role</th>
+          <th class="head">Parent</th>
+          <th class="head">Review</th>
+          <th class="head">Submission</th>
+          <th class="head">Metareview</th>
+          <th class="head">Privacy</th>
+          <th class="head">Team Names</th>
+        </tr>
+
+      <% for user in @users %>
+         <% count = 0 %>
+
+
+            <tr>
+              <% if !((@doubleArry[user.id]).nil?)%>
+                  <td>
+                    <input type="checkbox" id = "<%=user.id%>" name="link[]" value="<%=user.id%>"/>
+                  </td>
+                  <td><a id= "hide_<%= user.id%>" href= '#'  onclick="javascript: <% for i in 0.. @doubleArry[user.id].count-1 do%> toggleElementOurs('<%= user.id%>_<%=i%>table',this.id,<%= user.id%>);<%i =i-1 end%>" ><img id="showimg_<%= user.id%>"  src = "/images/129.png" alt ="">  </a>  <a id= "show_<%= user.id%>" style="display: ''"  onclick="javascript: <% for i in 0.. @doubleArry[user.id].count-1 do%> toggleElementOurs('<%= user.id%>_<%=i%>table',this.id,<%= user.id%>);<%i =i-1 end%>" ><img id="img_<%= user.id%>"  src = "/images/130.png" alt ="">  </a>
+
+                  </td>
+              <% else %>
+                  <td><input type="checkbox" id= "<%=user.id%>" name="link[]" value="<%=user.id%>"/></td>
+                  <td>   </td>
+              <% end %>
+
+              <td><%= link_to user.name, :action => 'show', :id => user.id %></td>
+              <td ><%= user.fullname  %></td>
+              <td><%= user.email %></td>
+              <td><%= link_to user.role.name, :controller => 'roles', :action => 'show', :id => user.role.id %></td>
+              <td align="center"><%= (User.find_by_id(user.parent_id)).name %></td>
+              <td><%= User.yesorno(user.email_on_review) %></td>
+              <td><%= User.yesorno(user.email_on_submission) %></td>
+              <td><%= User.yesorno(user.email_on_review_of_review) %></td>
+              <td><%= User.yesorno(user.leaderboard_privacy) %></td>
+              <% if !@teamParticipation[user.id].nil? %>
+                  <td>
+                  <% @teamParticipation[user.id].each do |teamTuple| %>
+                      <a href="#" title="<%= @userNamesForTeam[teamTuple.team_id]%>"><%= @teamNamesHashCollected[teamTuple.team_id]%></a>
+                  <%end%>
+                  </td>
+              <%else%>
+                  <td></td>
+              <%end%>
+
+          </tr>
+
+
+          <% if !@doubleArry[user.id].nil? %>
+
+
+                <% for user2 in @doubleArry[user.id] %>
+                    <% count2 =0%>
+                    <tr  id='<%= user.id%>_<%=count%>table' bgcolor="#90ee90">
+                    <% if !@doubleArry[user2.id].nil?  %>
+                          <% visibleElement = 0 %>
+                          <td>
+
+                            <input type="checkbox" name="link[]" id= "<%=user2.id%>" value="<%=user2.id%>"/>
+                          </td>
+                          <td><a id=  "hide_<%= user2.id%>" href = '#' onclick="<% for i in 0.. @doubleArry[user2.id].count-1 do%> toggleElementOurs('<%= user2.id%>_<%=i%>table',this.id,<%= user2.id%>);<%i =i-1 end%>"><img id="img_t"  src = "/images/129.png" alt =""> </a>  <a id=  "show_<%= user2.id%>" href = '#' onclick="<% for i in 0.. @doubleArry[user2.id].count-1 do%> toggleElementOurs('<%= user2.id%>_<%=i%>table',this.id,<%= user2.id%>);<%i =i-1 end%>"><img id="img_t3"  src = "/images/130.png" alt =""> </a></td>
+                      <% else %>
+                          <td>
+                            <input type="checkbox" name="link[]" id= "<%=user2.id%>" value="<%=user2.id%>"/>
+                          </td>
+                          <td></td>
+                      <% end %>
+
+                      <td><%= link_to user2.name, :action => 'show', :id => user2.id %></td>
+                      <td><%= user2.fullname %></td>
+                      <td><%= user2.email %></td>
+                      <td><%= link_to user2.role.name, :controller => 'roles', :action => 'show', :id => user2.role.id %></td>
+                      <td align="center"><%= (User.find_by_id(user2.parent_id)).name %></td>
+                      <td><%= User.yesorno(user2.email_on_review) %></td>
+                      <td><%= User.yesorno(user2.email_on_submission) %></td>
+                      <td><%= User.yesorno(user2.email_on_review_of_review) %></td>
+                      <td><%= User.yesorno(user2.leaderboard_privacy) %></td>
+                      <% if !@teamParticipation[user2.id].nil? %>
+                          <td>
+                          <% @teamParticipation[user2.id].each do |teamTuple| %>
+
+                              <a href="#" title="<%= @userNamesForTeam[teamTuple.team_id]%>"><%= @teamNamesHashCollected[teamTuple.team_id]%></a>
+
+                          <%end%>
+                          </td>
+                      <%else%>
+                          <td> </td>
+                      <%end%>
+                    </tr>
+
+                      <% if !@doubleArry[user2.id].nil? %>
+
+                             <% for user3 in @doubleArry[user2.id] %>
+                                <tr id = '<%= user2.id%>_<%=count2%>table' bgcolor="#ffa07a">
+                                  <td><input type="checkbox" id= "<%=user.id%>" name="link[]" value="<%=user.id%>"/></td>
+                                  <td>   </td>
+                                  <td><%= link_to user3.name, :action => 'show', :id => user3.id %></td>
+                                  <td><%= user3.fullname %></td>
+                                  <td><%= user3.email %></td>
+                                  <td><%= link_to user3.role.name, :controller => 'roles', :action => 'show', :id => user3.role.id %></td>
+                                  <td align="center"><%= (User.find_by_id(user3.parent_id)).name %></td>
+                                  <td><%= User.yesorno(user3.email_on_review) %></td>
+                                  <td><%= User.yesorno(user3.email_on_submission) %></td>
+                                  <td><%= User.yesorno(user3.email_on_review_of_review) %></td>
+                                  <td><%= User.yesorno(user3.leaderboard_privacy) %></td>
+                                  <% if !@teamParticipation[user3.id].nil? %>
+                                      <td>
+                                      <% (@teamParticipation[user3.id]).each do |teamTuple| %>
+                                         <a href="#" title="<%= @userNamesForTeam[teamTuple.team_id]%>"><%= @teamNamesHashCollected[teamTuple.team_id]%></a>
+                                      <%end%>
+                                      </td>
+                                      <%else%>
+                                      <td> </td>
+
+                                <%end%>
+                                </tr>
+                            <% count2 = count2 + 1 %>
+
+      <% end %>
+
+                      <%end %>
+                    <% count = count + 1 %>
+
+      <% end %>
+          <%end %>
+
+
+      <% end %>
+
+      </table>
+      <a href="javascript:setChecked(0)"><font face="Arial, Helvetica, sans-serif" size="2">Clear All</font></a>
+
+    </div>  <p>  <%= submit_tag ("    Edit    ")%>  </p>
+<% end %>
+<hr/>
+
+
+
+<%= render :partial => 'users/pagination' %>
+<hr/>
+<%= render :partial => 'shared_scripts/pages' %>
+<%= render :partial => 'shared_scripts/letters' %>
+
+
+
+
+
+<p>
+  <%
+     session[:return_to] = request.request_uri
+  %>
+
+  <%= link_to 'New User', :action => 'new' %> |
+  <%= link_to 'Import Users', :controller=>'import_file', :action=>'start', :model => 'User', :expected_fields => 'username, full name (first[ middle] last), e-mail address, password' %>|
+  <%= link_to 'Export Users', :controller=>'export_file',:action=>'start',:model=> 'User',:id=> 1 %>
+
+</p>
+
+
+</body>
